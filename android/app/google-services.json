@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "410919083565",
+    "project_id": "ispgayaapp-143a0",
+    "storage_bucket": "ispgayaapp-143a0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:410919083565:android:b1524266ee8b55950462a4",
+        "android_client_info": {
+          "package_name": "com.applicationispgaya"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnLdgb5Xy54BGIHqet_Ni-AStVa6F1YBQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:410919083565:android:41aea0c2dd43dfa80462a4",
+        "android_client_info": {
+          "package_name": "com.ispgayaapp1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnLdgb5Xy54BGIHqet_Ni-AStVa6F1YBQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
