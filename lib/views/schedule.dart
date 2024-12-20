@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class GuestView extends StatelessWidget {
+class Schedule extends StatelessWidget {
   final String title;
 
-  const GuestView({super.key, required this.title});
+  const Schedule({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,7 @@ class GuestView extends StatelessWidget {
         title: Text(title),
       ),
       body: const Center(
-        child: Text('Welcome, Guest!'),
+        child: Text("it's christmas! 🎄 You are free!!!!"),
       ),
     );
   }
