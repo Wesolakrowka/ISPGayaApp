@@ -1,9 +1,12 @@
 import 'package:applicationispgaya/firebase_options.dart';
-import 'package:applicationispgaya/views/guest_view.dart';
-import 'package:applicationispgaya/views/home_page_view.dart';
+import 'package:applicationispgaya/guest_view.dart';
+import 'package:applicationispgaya/viewStudent/home_page_view.dart';
+import 'package:applicationispgaya/viewAdmin/admin_dashboard.dart';
+import 'package:applicationispgaya/viewProf/prof_dashboard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; 
 
 class LoginView extends StatefulWidget {
   final String title;
@@ -140,22 +143,66 @@ class _LoginViewState extends State<LoginView> {
                               return;
                             }
 
-                           
                             try {
-                              await FirebaseAuth.instance.signInWithEmailAndPassword(
-                                email: email,
-                                password: password,
-                              );
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const HomePageView(),
-                                ),
-                              );
-                            } on FirebaseAuthException {
+                              // Logowanie użytkownika w Firebase Authentication
+                              UserCredential userCredential = await FirebaseAuth.instance
+                                  .signInWithEmailAndPassword(email: email, password: password);
+
+                              final user = userCredential.user;
+                              if (user != null) {
+                                // Odczytaj rolę użytkownika z Firestore
+                                final userDoc = await FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(user.uid)
+                                    .get();
+
+                                if (userDoc.exists) {
+                                  final role = userDoc.data()?['role'];
+
+                                  if (role == 'student') {
+                                    // Przekierowanie na ekran studenta
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const HomePageView(),
+                                      ),
+                                    );
+                                  } else if (role == 'prof') {
+                                    // Przekierowanie na ekran administratora
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ProfDashboard(), // Utwórz ekran admina
+                                      ),
+                                    );
+                                  } else if (role == 'admin') {
+                                    // Przekierowanie na ekran administratora
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AdminDashboard(), // Utwórz ekran admina
+                                      ),
+                                    );
+                                  } else {
+                                    // Jeśli rola nie jest zdefiniowana, pokaż błąd
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("User role is not defined."),
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("User data not found."),
+                                    ),
+                                  );
+                                }
+                              }
+                            } on FirebaseAuthException catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Invalid email or password."),
+                                SnackBar(
+                                  content: Text(e.message ?? "Invalid email or password."),
                                 ),
                               );
                             }

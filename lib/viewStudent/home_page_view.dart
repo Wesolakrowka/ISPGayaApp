@@ -1,7 +1,7 @@
-import 'package:applicationispgaya/views/degrees.dart';
-import 'package:applicationispgaya/views/payment.dart';
-import 'package:applicationispgaya/views/personal.dart';
-import 'package:applicationispgaya/views/schedule.dart';
+import 'package:applicationispgaya/viewStudent/degrees.dart';
+import 'package:applicationispgaya/viewStudent/payment.dart';
+import 'package:applicationispgaya/viewStudent/personal.dart';
+import 'package:applicationispgaya/viewStudent/schedule.dart';
 import 'package:flutter/material.dart';
 
 class HomePageView extends StatelessWidget {
@@ -76,7 +76,7 @@ class HomePageView extends StatelessWidget {
                     _buildMenuButton(
                       context,
                       label: 'Degrees and Training',
-                      route: const Degrees(title: 'Degrees'),
+                      route: const DegreesPage(title: 'Degrees'),
                     ),
                     const SizedBox(height: 30),
                     _buildMenuButton(
