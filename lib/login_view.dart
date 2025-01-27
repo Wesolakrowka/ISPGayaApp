@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:applicationispgaya/guest/main_guest.dart';
+
 class LoginView extends StatefulWidget {
   final String title;
 
@@ -36,198 +37,170 @@ class _LoginViewState extends State<LoginView> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Colors.white,
-    body: FutureBuilder(
-      future: Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ),
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.done:
-            return Stack(
-              children: [
-                // 📷 Obraz tła (dodaj swój obraz do folderu assets)
-                Positioned.fill(
-                  child: Opacity(
-                    opacity: 0.3, // Możesz dostosować przezroczystość
-                    child: Image.asset(
-                      "assets/1-44.jpg", // Ścieżka do pliku w katalogu assets
-                      fit: BoxFit.cover, // Dopasowanie obrazu do szerokości
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard on tap
+      child: Scaffold(
+        body: FutureBuilder(
+          future: Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          ),
+          builder: (context, snapshot) {
+            switch (snapshot.connectionState) {
+              case ConnectionState.done:
+                return Stack(
+                  children: [
+                    // 🌄 Background Image with Light Blur
+                    Positioned.fill(
+                      child: ColorFiltered(
+                        colorFilter: ColorFilter.mode(
+                          Colors.black.withOpacity(0.3), // Lighter overlay
+                          BlendMode.darken,
+                        ),
+                        child: Image.asset(
+                          "assets/1-44.jpg",
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
 
-                // 📋 Formularz logowania na wierzchu
-                SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Logo ISPGAYA
-                        Text(
-                          'ISPGAYA',
-                          style: TextStyle(
-                            color: const Color(0xFFFA8742),
-                            fontSize: MediaQuery.of(context).size.width * 0.15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        Text(
-                          'Instituto Superior Politécnico',
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontSize: MediaQuery.of(context).size.width * 0.045,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 150),
-
-                        const Text(
-                          'LOGIN',
-                          style: TextStyle(
-                            color: Color(0xFFFA8742),
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-
-                        // Email TextField
-                        TextField(
-                          controller: _email,
-                          autocorrect: false,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            hintText: "Email",
-                            prefixIcon: const Icon(Icons.email, color: Colors.grey),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.9),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-
-                        // Password TextField
-                        TextField(
-                          controller: _password,
-                          obscureText: true,
-                          enableSuggestions: false,
-                          autocorrect: false,
-                          decoration: InputDecoration(
-                            hintText: "Password",
-                            prefixIcon: const Icon(Icons.lock, color: Colors.grey),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.9),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 25),
-
-                        // Login Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: _buttonStyle(),
-                            onPressed: _isLoading ? null : _loginUser,
-                            child: _isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text(
-                                    'Login',
-                                    style: TextStyle(fontSize: 18, color: Colors.white),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-
-                        // Guest Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            style: _outlinedButtonStyle(),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const GuestHomeView(),
+                    // 📋 Login Form
+                    Center(
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 25),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 🏛️ Logo
+                              Text(
+                                'ISPGAYA',
+                                style: TextStyle(
+                                  color: const Color(0xFFFA8742),
+                                  fontSize: MediaQuery.of(context).size.width * 0.12,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              );
-                            },
-                            child: const Text(
-                              "I'm a guest",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Color(0xFFFA8742),
+                                textAlign: TextAlign.center,
                               ),
-                            ),
+                              Text(
+                                'Instituto Superior Politécnico',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: MediaQuery.of(context).size.width * 0.045,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 50),
+
+                              // 🔐 "LOGIN" Title
+                              const Text(
+                                'LOGIN',
+                                style: TextStyle(
+                                  color: Color(0xFFFA8742),
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              // ✉️ Email Input
+                              _buildTextField(_email, "Email", Icons.email),
+                              const SizedBox(height: 15),
+
+                              // 🔒 Password Input
+                              _buildTextField(_password, "Password", Icons.lock, obscureText: true),
+                              const SizedBox(height: 25),
+
+                              // 🔘 Login Button
+                              _buildButton(
+                                label: "Login",
+                                onPressed: _isLoading ? null : _loginUser,
+                                isPrimary: true,
+                              ),
+                              const SizedBox(height: 15),
+
+                              // 🏛️ Guest Button
+                              _buildButton(
+                                label: "I'm a guest",
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const GuestHomeView()),
+                                  );
+                                },
+                                isPrimary: false,
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
-            );
-          default:
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-        }
-      },
-    ),
-  );
-}
-
-  // Styl dla pomarańczowego przycisku "Login"
-  ButtonStyle _buttonStyle() {
-    return ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFFFA8742),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 15),
-    ).copyWith(
-      overlayColor: WidgetStateProperty.resolveWith<Color?>(
-        (Set<WidgetState> states) {
-          if (states.contains(WidgetState.pressed)) {
-            return const Color(0xFFF26600); // Zmiana koloru na #F26600 po naciśnięciu
-          }
-          return null;
-        },
+                  ],
+                );
+              default:
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+            }
+          },
+        ),
       ),
     );
   }
 
-  // Styl dla białego przycisku "I'm a guest"
-  ButtonStyle _outlinedButtonStyle() {
-    return OutlinedButton.styleFrom(
-      side: const BorderSide(color: Color(0xFFFA8742)),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 15),
-    ).copyWith(
-      overlayColor: WidgetStateProperty.resolveWith<Color?>(
-        (Set<WidgetState> states) {
-          if (states.contains(WidgetState.pressed)) {
-            return const Color(0xFFF26600).withOpacity(0.3); // Lżejszy efekt po naciśnięciu
-          }
-          return null;
-        },
+  // 🔤 Text Field Widget
+  Widget _buildTextField(TextEditingController controller, String hintText, IconData icon,
+      {bool obscureText = false}) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: obscureText ? TextInputType.visiblePassword : TextInputType.emailAddress,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+        prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.2),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }
 
-  // Metoda logowania użytkownika
+  // 🔘 Button Widget
+  Widget _buildButton({required String label, required VoidCallback? onPressed, required bool isPrimary}) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.all(
+            isPrimary ? const Color(0xFFFA8742) : Colors.white,
+          ),
+          foregroundColor: WidgetStateProperty.all(
+            isPrimary ? Colors.white : const Color(0xFFFA8742),
+          ),
+          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 15)),
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: isPrimary
+                  ? BorderSide.none
+                  : const BorderSide(color: Color(0xFFFA8742)),
+            ),
+          ),
+        ),
+        onPressed: onPressed,
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text(label, style: const TextStyle(fontSize: 18)),
+      ),
+    );
+  }
+
+  // 🚀 Login User Method
   Future<void> _loginUser() async {
     setState(() => _isLoading = true);
 
@@ -235,9 +208,7 @@ Widget build(BuildContext context) {
     final password = _password.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in both fields.")),
-      );
+      _showMessage("Please fill in both fields.");
       setState(() => _isLoading = false);
       return;
     }
@@ -256,30 +227,27 @@ Widget build(BuildContext context) {
         if (userDoc.exists) {
           final role = userDoc.data()?['role'];
 
-          if (role == 'student') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomePageView()),
-            );
-          } else if (role == 'prof') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => ProfDashboard()),
-            );
-          } else if (role == 'admin') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => AdminDashboard()),
-            );
-          }
+          Widget nextPage = switch (role) {
+            "student" => const HomePageView(),
+            "prof" => const ProfDashboard(),
+            "admin" => const AdminDashboard(),
+            _ => const GuestHomeView(),
+          };
+
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => nextPage));
         }
       }
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Invalid email or password.")),
-      );
+      _showMessage(e.message ?? "Invalid email or password.");
     }
 
     setState(() => _isLoading = false);
+  }
+
+  // ⚠️ Show Error Messages
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 }

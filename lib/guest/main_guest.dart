@@ -13,7 +13,7 @@ class GuestHomeView extends StatelessWidget {
         children: [
           // 📷 Background Image
           Positioned.fill(
-            child: Image.asset("assets/2.jpg", fit: BoxFit.cover),
+            child: Image.asset("assets/1-1503_2.jpg", fit: BoxFit.cover),
           ),
           SafeArea(
             child: Column(

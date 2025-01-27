@@ -25,7 +25,7 @@ class SchoolInfoPage extends StatelessWidget {
         children: [
           // 📷 Background Image
           Positioned.fill(
-            child: Image.asset("assets/background.jpg", fit: BoxFit.cover),
+            child: Image.asset("assets/1-1440.jpg", fit: BoxFit.cover),
           ),
           SafeArea(
             child: SingleChildScrollView(
