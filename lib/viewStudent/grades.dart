@@ -129,7 +129,7 @@ class _StudentGradesViewState extends State<StudentGradesView> {
               ),
             ],
           );
-        }).toList(),
+        }),
       ],
     );
   }

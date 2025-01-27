@@ -45,6 +45,15 @@ class _ScheduleState extends State<Schedule> {
     _loadClasses();
   }
 
+  void _changeWeek(int direction) {
+    setState(() {
+      _currentWeekStart = _currentWeekStart.add(Duration(days: 7 * direction));
+      _currentWeekEnd = _currentWeekEnd.add(Duration(days: 7 * direction));
+    });
+
+    _loadClasses();
+  }
+
   Future<void> _getUserData() async {
     final user = _auth.currentUser;
     if (user != null) {
@@ -62,48 +71,36 @@ class _ScheduleState extends State<Schedule> {
 
   Future<void> _loadClasses() async {
     try {
-      final snapshot = await _firestore.collection('classes').get();
+      QuerySnapshot classSnapshot = await _firestore.collection('classes').get();
 
       setState(() {
         schedule = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: []};
 
-        for (var doc in snapshot.docs) {
+        for (var doc in classSnapshot.docs) {
           final Map<String, dynamic> classData = doc.data() as Map<String, dynamic>;
 
-          List<dynamic> dates = classData['date'] ?? [];
-          bool isInRange = dates.any((d) {
-            try {
-              DateTime classDate = DateFormat('yyyy-MM-dd').parse(d);
-              return classDate.isAfter(_currentWeekStart.subtract(const Duration(days: 1))) &&
-                  classDate.isBefore(_currentWeekEnd.add(const Duration(days: 1)));
-            } catch (e) {
-              return false;
-            }
-          });
-
-          if (!isInRange) continue;
-
-          final subject = classData['name'] ?? "Unknown";
-          final time = classData['time'] ?? "00:00";
-          final room = classData['room'] ?? "N/A";
-          final bool areTakingPlace = classData['areTakingPlace'] ?? true;
           final List<dynamic> students = classData['students'] ?? [];
-          final List<dynamic> professors = classData['professor'] ?? [];
+          final String? professorId = classData['professorId'];
+          final String courseId = classData['courseId'] ?? "";
 
-          final dayOfWeek = DateFormat('yyyy-MM-dd').parse(dates[0]).weekday - 1;
+          if (userRole == "student" && !students.contains(userId)) continue;
+          if (userRole == "prof" && professorId != userId) continue;
 
-          if (userRole == "admin" ||
-              (userRole == "prof" && professors.contains(userId)) ||
-              (userRole == "student" && students.contains(userId))) {
-            schedule[dayOfWeek]?.add({
-              'subject': subject,
-              'time': time,
-              'room': room,
-              'areTakingPlace': areTakingPlace,
-              'docId': doc.id,
-              'professorId': professors.isNotEmpty ? professors[0] : null,
-            });
-          }
+          DateTime startDate = DateTime.parse(classData['startDate']);
+          DateTime endDate = DateTime.parse(classData['endDate']);
+
+          if (startDate.isAfter(_currentWeekEnd) || endDate.isBefore(_currentWeekStart)) continue;
+
+          int dayOfWeek = _getDayOfWeekIndex(classData['dayOfWeek']);
+
+          schedule[dayOfWeek]?.add({
+            'courseId': courseId,
+            'professorId': professorId,
+            'time': classData['time'] ?? "00:00",
+            'room': classData['room'] ?? "N/A",
+            'areTakingPlace': classData['areTakingPlace'] ?? true,
+            'docId': doc.id,
+          });
         }
       });
     } catch (e) {
@@ -111,27 +108,26 @@ class _ScheduleState extends State<Schedule> {
     }
   }
 
-  void _selectWeek() async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _currentWeekStart,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: Color(0xFFFA8742),
-            colorScheme: ColorScheme.light(primary: Color(0xFFFA8742)),
-            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
-          ),
-          child: child!,
-        );
-      },
-    );
+  int _getDayOfWeekIndex(String day) {
+    final Map<String, int> days = {
+      "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
+      "Friday": 4, "Saturday": 5, "Sunday": 6,
+    };
+    return days[day] ?? 0;
+  }
 
-    if (picked != null) {
-      _setWeekDates(picked);
-    }
+  Future<String> _getCourseName(String courseId) async {
+    if (courseId.isEmpty) return "Unknown Course";
+    var courseDoc = await _firestore.collection('courses').doc(courseId).get();
+    var courseData = courseDoc.data();
+    return courseData != null ? courseData['name'] ?? "Unknown Course" : "Unknown Course";
+  }
+
+  Future<String> _getProfessorName(String professorId) async {
+    if (professorId.isEmpty) return "Unknown Professor";
+    var professorDoc = await _firestore.collection('users').doc(professorId).get();
+    var professorData = professorDoc.data();
+    return professorData != null ? professorData['name'] ?? "Unknown Professor" : "Unknown Professor";
   }
 
   Widget _buildScheduleDay(int dayOfWeek) {
@@ -150,18 +146,36 @@ class _ScheduleState extends State<Schedule> {
             if (dayClasses.isEmpty)
               const Text('No classes scheduled', style: TextStyle(fontSize: 16)),
             for (var classInfo in dayClasses)
-              ListTile(
-                title: Text(
-                  "${classInfo['subject']} - ${classInfo['time']}",
-                  style: TextStyle(fontWeight: FontWeight.bold, color: classInfo['areTakingPlace'] ? Colors.black : Colors.red),
-                ),
-                subtitle: Text("Room: ${classInfo['room']}\n${classInfo['areTakingPlace'] ? '✅ Taking place' : '❌ Canceled'}"),
-                trailing: userRole == "admin"
-                    ? IconButton(
-                        icon: Icon(Icons.edit, color: Color(0xFFFA8742)),
-                        onPressed: () => _editClassDetails(context, classInfo),
-                      )
-                    : null,
+              FutureBuilder(
+                future: Future.wait([
+                  _getCourseName(classInfo['courseId']),
+                  _getProfessorName(classInfo['professorId'] ?? ""),
+                ]),
+                builder: (context, AsyncSnapshot<List<String>> snapshot) {
+                  if (!snapshot.hasData) {
+                    return const ListTile(title: Text("Loading..."));
+                  }
+
+                  String courseName = snapshot.data![0];
+                  String professorName = snapshot.data![1];
+
+                  return ListTile(
+                    title: Text(
+                      "$courseName - ${classInfo['time']}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: classInfo['areTakingPlace'] ? Colors.black : Colors.red,
+                      ),
+                    ),
+                    subtitle: Text(
+                      "Room: ${classInfo['room']}\nProfessor: $professorName\n${classInfo['areTakingPlace'] ? '✅ Taking place' : '❌ Canceled'}"
+                    ),
+                    trailing: userRole == "admin" ? IconButton(
+                      icon: const Icon(Icons.edit, color: Color(0xFFFA8742)),
+                      onPressed: () => _editClassDetails(context, classInfo),
+                    ) : null,
+                  );
+                },
               ),
           ],
         ),
@@ -182,17 +196,11 @@ class _ScheduleState extends State<Schedule> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(controller: timeController, decoration: const InputDecoration(labelText: "Enter new time")),
-            const SizedBox(height: 10),
             TextField(controller: roomController, decoration: const InputDecoration(labelText: "Enter new room")),
-            const SizedBox(height: 10),
             SwitchListTile(
               title: const Text("Class Taking Place?"),
               value: classTakingPlace,
-              onChanged: (value) {
-                setState(() {
-                  classTakingPlace = value;
-                });
-              },
+              onChanged: (value) => setState(() => classTakingPlace = value),
             ),
           ],
         ),
@@ -215,33 +223,27 @@ class _ScheduleState extends State<Schedule> {
     );
   }
 
-@override
+
+  @override
   Widget build(BuildContext context) {
-    final DateFormat dateFormat = DateFormat('dd MMM yyyy');
-    final String startDateFormatted = dateFormat.format(_currentWeekStart);
-    final String endDateFormatted = dateFormat.format(_currentWeekEnd);
+    String startWeekFormatted = DateFormat('dd MMM yyyy').format(_currentWeekStart);
+    String endWeekFormatted = DateFormat('dd MMM yyyy').format(_currentWeekEnd);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Weekly Schedule'),
-        backgroundColor: Color(0xFFFA8742),
+        backgroundColor: const Color(0xFFFA8742),
+        actions: [
+          IconButton(icon: const Icon(Icons.chevron_left), onPressed: () => _changeWeek(-1)),
+          IconButton(icon: const Icon(Icons.chevron_right), onPressed: () => _changeWeek(1)),
+        ],
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Column(
-              children: [
-                ElevatedButton(
-                  onPressed: _selectWeek,
-                  child: const Text("Select Week"),
-                ),
-                Text(
-                  "Week: $startDateFormatted - $endDateFormatted",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
+            child: Text("Week: $startWeekFormatted - $endWeekFormatted",
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: ListView.builder(

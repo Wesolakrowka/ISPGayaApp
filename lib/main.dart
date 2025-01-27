@@ -22,7 +22,7 @@ void main() async {
 
   bool shouldGenerateData = false; // Ustaw na true, jeśli chcesz wygenerować dane
   if (shouldGenerateData) {
-    uploadDegreesToFirestore();
+    populateFirestore();
   }
 
   runApp(const MyApp());

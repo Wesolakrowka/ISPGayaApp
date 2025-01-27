@@ -44,6 +44,12 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<key>LSApplicationQueriesSchemes</key>
+<array>
+    <string>http</string>
+    <string>https</string>
+</array>
+
 	<true/>
 </dict>
 </plist>

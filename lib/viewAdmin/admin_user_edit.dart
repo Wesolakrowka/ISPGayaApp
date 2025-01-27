@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AdminUserEdit extends StatefulWidget {
+  const AdminUserEdit({super.key});
+
   @override
   _AdminUserEditState createState() => _AdminUserEditState();
 }
@@ -14,6 +16,7 @@ class _AdminUserEditState extends State<AdminUserEdit> {
 
   Map<String, dynamic>? userData;
   bool isLoading = false;
+  String? selectedCourse;
 
   void fetchUserData() async {
     setState(() => isLoading = true);
@@ -22,7 +25,7 @@ class _AdminUserEditState extends State<AdminUserEdit> {
     try {
       QuerySnapshot userQuery = await _firestore
           .collection('users')
-          .where('id', isEqualTo: userSearchId) // 🔥 Search by Firestore 'id'
+          .where('id', isEqualTo: userSearchId)
           .get();
 
       if (userQuery.docs.isNotEmpty) {
@@ -74,14 +77,52 @@ class _AdminUserEditState extends State<AdminUserEdit> {
   }
 
   Future<String> _getFirestoreDocumentId(String userId) async {
-    // Get the Firestore document ID based on the stored "id" field
     QuerySnapshot userQuery =
         await _firestore.collection('users').where('id', isEqualTo: userId).get();
 
     if (userQuery.docs.isNotEmpty) {
-      return userQuery.docs.first.id; // 🔥 Return Firestore document ID
+      return userQuery.docs.first.id;
     } else {
       throw Exception("User not found in Firestore");
+    }
+  }
+
+  void _addCourseToUser(String courseId) async {
+    if (userData == null) return;
+
+    String userDocId = await _getFirestoreDocumentId(userData!['id']);
+    String userRole = userData!["role"];
+
+    List<dynamic> userCourses =
+        List<String>.from(userData![userRole == "prof" ? "courses" : "enrolledCourses"] ?? []);
+
+    if (!userCourses.contains(courseId)) {
+      userCourses.add(courseId);
+      userData![userRole == "prof" ? "courses" : "enrolledCourses"] = userCourses;
+
+      await _firestore.collection('users').doc(userDocId).update({
+        userRole == "prof" ? "courses" : "enrolledCourses": userCourses,
+      });
+
+      DocumentReference courseRef = _firestore.collection('courses').doc(courseId);
+      DocumentSnapshot courseSnapshot = await courseRef.get();
+
+      if (courseSnapshot.exists) {
+        if (userRole == "student") {
+          List<dynamic> students = List<String>.from(courseSnapshot["students"] ?? []);
+          if (!students.contains(userDocId)) {
+            students.add(userDocId);
+            await courseRef.update({"students": students});
+          }
+        } else if (userRole == "prof") {
+          await courseRef.update({"professorId": userDocId});
+        }
+      }
+
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("✅ Course added successfully!")),
+      );
     }
   }
 
@@ -111,7 +152,7 @@ class _AdminUserEditState extends State<AdminUserEdit> {
                     ? Expanded(
                         child: ListView(
                           children: [
-                            _buildInfoRow("User ID:", userData!['id'] ?? "N/A"), // 🔥 Displays Firestore 'id'
+                            _buildInfoRow("User ID:", userData!['id'] ?? "N/A"),
                             buildEditableField("Full Name", "name"),
                             buildEditableField("Email", "email"),
                             buildEditableField("Address", "address"),
@@ -155,7 +196,7 @@ class _AdminUserEditState extends State<AdminUserEdit> {
 
   Widget buildCoursesField() {
     bool isProfessor = userData?["role"] == "prof";
-    String fieldKey = isProfessor ? "courses" : "enrolledCourses"; // 🔥 Switches between "courses" & "enrolledCourses"
+    String fieldKey = isProfessor ? "courses" : "enrolledCourses";
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 5),
@@ -177,21 +218,35 @@ class _AdminUserEditState extends State<AdminUserEdit> {
               );
             }).toList(),
           ),
-          TextField(
-            decoration: InputDecoration(labelText: "➕ Add Course", suffixIcon: Icon(Icons.add)),
-            onSubmitted: (value) {
-              setState(() {
-                (userData?[fieldKey] as List<dynamic>?)?.add(value);
-              });
+          StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('courses').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return CircularProgressIndicator();
+              var courses = snapshot.data!.docs;
+
+              return DropdownButton<String>(
+                value: selectedCourse,
+                hint: Text("Select a course"),
+                isExpanded: true,
+                items: courses.map((course) {
+                  return DropdownMenuItem(
+                    value: course.id,
+                    child: Text(course["name"]),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => selectedCourse = value);
+                  _addCourseToUser(value!);
+                },
+              );
             },
           ),
         ],
       ),
     );
   }
-
-  // Row to display user ID
-  Widget _buildInfoRow(String label, String value) {
+}
+Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Row(
@@ -219,5 +274,4 @@ class _AdminUserEditState extends State<AdminUserEdit> {
         ],
       ),
     );
-  }
 }

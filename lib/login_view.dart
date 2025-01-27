@@ -1,5 +1,4 @@
 import 'package:applicationispgaya/firebase_options.dart';
-import 'package:applicationispgaya/guest_view.dart';
 import 'package:applicationispgaya/viewStudent/home_page_view.dart';
 import 'package:applicationispgaya/viewAdmin/admin_dashboard.dart';
 import 'package:applicationispgaya/viewProf/prof_dashboard.dart';
@@ -7,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:applicationispgaya/guest/main_guest.dart';
 class LoginView extends StatefulWidget {
   final String title;
 
@@ -159,7 +158,7 @@ Widget build(BuildContext context) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const GuestView(),
+                                  builder: (context) => const GuestHomeView(),
                                 ),
                               );
                             },

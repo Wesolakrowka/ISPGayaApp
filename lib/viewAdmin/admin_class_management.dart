@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class AdminClassManagement extends StatefulWidget {
+  const AdminClassManagement({super.key});
+
   @override
   _AdminClassManagementState createState() => _AdminClassManagementState();
 }
@@ -19,7 +21,9 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
   DateTime? _startDate;
   DateTime? _endDate;
 
-  final List<String> _daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  final List<String> _daysOfWeek = [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+  ];
 
   void _selectDateRange() async {
     DateTimeRange? picked = await showDateRangePicker(
@@ -29,8 +33,8 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
-            primaryColor: Color(0xFFFA8742),
-            colorScheme: ColorScheme.light(primary: Color(0xFFFA8742)),
+            primaryColor: const Color(0xFFFA8742),
+            colorScheme: const ColorScheme.light(primary: Color(0xFFFA8742)),
             buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
           ),
           child: child!,
@@ -50,7 +54,7 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
     var courseDoc = await _firestore.collection('courses').doc(courseId).get();
     if (courseDoc.exists) {
       setState(() {
-        _selectedProfessor = courseDoc.data()?['professorId'];
+        _selectedProfessor = courseDoc.data()?['id']; // 🔹 Fetch the correct professor ID
         _enrolledStudents = List<String>.from(courseDoc.data()?['students'] ?? []);
       });
     }
@@ -69,7 +73,7 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
 
     await _firestore.collection('classes').add({
       'courseId': _selectedCourse,
-      'professorId': _selectedProfessor,
+      'professorId': _selectedProfessor, // 🔹 Save the correct professor ID
       'students': _enrolledStudents,
       'dayOfWeek': _selectedDay,
       'time': _timeController.text.trim(),
@@ -95,7 +99,7 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Admin - Class Schedule"), backgroundColor: Color(0xFFFA8742)),
+      appBar: AppBar(title: const Text("Admin - Class Schedule"), backgroundColor: const Color(0xFFFA8742)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -128,28 +132,15 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
             if (_selectedCourse != null) ...[
               const SizedBox(height: 10),
               const Text("Assigned Professor", style: TextStyle(fontWeight: FontWeight.bold)),
-              StreamBuilder<DocumentSnapshot>(
-                stream: _firestore.collection('users').doc(_selectedProfessor).snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData || !snapshot.data!.exists) return const Text("No professor assigned");
-                  var data = snapshot.data!.data() as Map<String, dynamic>;
-                  return Text("Professor: ${data['name']}");
-                },
-              ),
+              _selectedProfessor != null
+                  ? Text("Professor ID: $_selectedProfessor", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+                  : const Text("No professor assigned"),
 
               const SizedBox(height: 10),
               const Text("Enrolled Students", style: TextStyle(fontWeight: FontWeight.bold)),
-              StreamBuilder<QuerySnapshot>(
-                stream: _firestore.collection('users').where(FieldPath.documentId, whereIn: _enrolledStudents).snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const Text("No students enrolled");
-                  var students = snapshot.data!.docs.map((doc) {
-                    var data = doc.data() as Map<String, dynamic>;
-                    return Text(data['name']);
-                  }).toList();
-                  return Column(children: students);
-                },
-              ),
+              _enrolledStudents.isNotEmpty
+                  ? Column(children: _enrolledStudents.map((s) => Text(s)).toList())
+                  : const Text("No students enrolled"),
             ],
 
             const SizedBox(height: 10),
@@ -184,7 +175,7 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
               child: ElevatedButton(
                 onPressed: _saveSchedule,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFFA8742),
+                  backgroundColor: const Color(0xFFFA8742),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
                 ),

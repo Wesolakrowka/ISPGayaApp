@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'chat_screen.dart';
 
 class ContactsView extends StatefulWidget {
@@ -14,9 +15,64 @@ class _ContactsViewState extends State<ContactsView> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = "";
+  String? currentUserEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeUser();
+    _setupFCM();
+  }
+
+  void _initializeUser() {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      setState(() {
+        currentUserEmail = user.email;
+      });
+    }
+  }
+void _setupFCM() async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // Request permission for notifications
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    print("✅ Notifications enabled");
+  }
+
+  // Get FCM token
+  String? token = await messaging.getToken();
+  if (token != null && currentUserEmail != null) {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserEmail).get();
+
+    if (userDoc.exists) {
+      await FirebaseFirestore.instance.collection('users').doc(currentUserEmail).update({'fcmToken': token});
+    } else {
+      print("⚠️ User document does not exist: $currentUserEmail");
+    }
+  }
+
+  // Listen for incoming messages
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("📩 New message from ${message.notification?.title ?? "Unknown"}"),
+      ),
+    );
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {
+    if (currentUserEmail == null) return const Center(child: CircularProgressIndicator());
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Messages"),
@@ -24,7 +80,7 @@ class _ContactsViewState extends State<ContactsView> {
       ),
       body: Column(
         children: [
-          // 🔍 WYSZUKIWANIE UŻYTKOWNIKÓW (Teraz wyniki pojawiają się natychmiast)
+          // 🔍 **SEARCH USERS**
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: TextField(
@@ -48,7 +104,7 @@ class _ContactsViewState extends State<ContactsView> {
             ),
           ),
 
-          // 🔍 **Natychmiastowe wyniki wyszukiwania pod polem wyszukiwania**
+          // 🔍 **Instant Search Results**
           if (searchQuery.isNotEmpty)
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -74,7 +130,7 @@ class _ContactsViewState extends State<ContactsView> {
                   }
 
                   return ListView.builder(
-                    shrinkWrap: true, // 🔥 Pozwala na wyświetlanie wyników bez błędów
+                    shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: filteredUsers.length,
                     itemBuilder: (context, index) {
@@ -107,70 +163,69 @@ class _ContactsViewState extends State<ContactsView> {
               ),
             ),
 
-          // 🔥 **Lista konwersacji**
+          // 🔥 **User Conversations**
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('chats')
-                  .orderBy('timestamp', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+  stream: FirebaseFirestore.instance
+      .collection('chats')
+      .where('participants', arrayContains: currentUserEmail)
+      .orderBy('timestamp', descending: true)
+      .snapshots(),
+  builder: (context, snapshot) {
+    if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-                var currentUserEmail = _auth.currentUser!.email!;
-                var chatDocs = snapshot.data!.docs.where((doc) {
-                  var data = doc.data() as Map<String, dynamic>?;
-                  return data?['participants']?.contains(currentUserEmail) ?? false;
-                }).toList();
+    var chatDocs = snapshot.data!.docs;
 
-                if (chatDocs.isEmpty) return const Center(child: Text("No conversations yet."));
+    if (chatDocs.isEmpty) {
+      return const Center(child: Text("No conversations yet."));
+    }
 
-                return ListView.builder(
-                  itemCount: chatDocs.length,
-                  itemBuilder: (context, index) {
-                    var chat = chatDocs[index];
-                    List<dynamic> participants = chat['participants'];
+    return ListView.builder(
+      itemCount: chatDocs.length,
+      itemBuilder: (context, index) {
+        var chat = chatDocs[index];
+        List<dynamic> participants = chat['participants'];
 
-                    if (participants.length < 2) return const SizedBox();
+        String otherUserEmail = participants.firstWhere(
+          (email) => email != currentUserEmail,
+          orElse: () => "",
+        );
 
-                    String otherUserEmail = participants.firstWhere(
-                      (email) => email != currentUserEmail,
-                      orElse: () => "",
-                    );
+        return FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance.collection('users').doc(otherUserEmail).get(),
+          builder: (context, userSnapshot) {
+            if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
+              return const SizedBox();
+            }
 
-                    if (otherUserEmail.isEmpty) return const SizedBox();
+            var userData = userSnapshot.data!.data() as Map<String, dynamic>;
+            String userName = userData['name'] ?? otherUserEmail;
 
-                    return FutureBuilder<DocumentSnapshot>(
-                      future: FirebaseFirestore.instance.collection('users').doc(otherUserEmail).get(),
-                      builder: (context, userSnapshot) {
-                        if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
-                          return const SizedBox();
-                        }
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundColor: const Color(0xFFFA8742),
+                child: Text(userName[0].toUpperCase(), style: const TextStyle(color: Colors.white)),
+              ),
+              title: Text(userName, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(chat['lastMessage'] ?? "No messages"),
+              onTap: () {
+                FirebaseFirestore.instance.collection('chats').doc(chat.id).update({
+                  'unreadMessages.$currentUserEmail': false,
+                });
 
-                        var userData = userSnapshot.data!.data() as Map<String, dynamic>;
-                        String userName = userData['name'] ?? otherUserEmail;
-
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: const Color(0xFFFA8742
-),
-                            child: Text(userName[0].toUpperCase(), style: const TextStyle(color: Colors.white)),
-                          ),
-                          title: Text(userName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(chat['lastMessage'] ?? "No messages"),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ChatScreen(receiverEmail: otherUserEmail)),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChatScreen(receiverEmail: otherUserEmail)),
                 );
               },
-            ),
+            );
+          },
+        );
+      },
+    );
+  },
+)
+ // Added missing parenthesis
           ),
         ],
       ),
