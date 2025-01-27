@@ -51,14 +51,38 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
   }
 
   void _loadCourseDetails(String courseId) async {
-    var courseDoc = await _firestore.collection('courses').doc(courseId).get();
-    if (courseDoc.exists) {
-      setState(() {
-        _selectedProfessor = courseDoc.data()?['id']; // 🔹 Fetch the correct professor ID
-        _enrolledStudents = List<String>.from(courseDoc.data()?['students'] ?? []);
-      });
+  var courseDoc = await _firestore.collection('courses').doc(courseId).get();
+  if (courseDoc.exists) {
+    String professorId = courseDoc.data()?['id'] ?? "";
+    List<String> studentIds = List<String>.from(courseDoc.data()?['students'] ?? []);
+
+    // Pobieranie imienia profesora
+    String professorName = "Unknown Professor";
+    if (professorId.isNotEmpty) {
+      var professorDoc = await _firestore.collection('users').doc(professorId).get();
+      professorName = (professorDoc.data() != null && professorDoc.data()!.containsKey('name'))
+          ? professorDoc.data()!['name']
+          : "Unknown Professor";
     }
+
+    // Pobieranie imion studentów
+    List<String> studentNames = [];
+    for (String studentId in studentIds) {
+      var studentDoc = await _firestore.collection('users').doc(studentId).get();
+      if (studentDoc.exists && studentDoc.data() != null && studentDoc.data()!.containsKey('name')) {
+        studentNames.add(studentDoc.data()!['name']);
+      } else {
+        studentNames.add("Unknown Student");
+      }
+    }
+
+    setState(() {
+      _selectedProfessor = professorName;  // 🔥 Wyświetlamy imię profesora
+      _enrolledStudents = studentNames;   // 🔥 Wyświetlamy listę studentów z imionami
+    });
   }
+}
+
 
   void _saveSchedule() async {
     if (_selectedCourse == null ||
@@ -73,7 +97,7 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
 
     await _firestore.collection('classes').add({
       'courseId': _selectedCourse,
-      'professorId': _selectedProfessor, // 🔹 Save the correct professor ID
+      'professorId': _selectedProfessor, 
       'students': _enrolledStudents,
       'dayOfWeek': _selectedDay,
       'time': _timeController.text.trim(),
@@ -133,7 +157,7 @@ class _AdminClassManagementState extends State<AdminClassManagement> {
               const SizedBox(height: 10),
               const Text("Assigned Professor", style: TextStyle(fontWeight: FontWeight.bold)),
               _selectedProfessor != null
-                  ? Text("Professor ID: $_selectedProfessor", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+                  ? Text("Professor: $_selectedProfessor", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
                   : const Text("No professor assigned"),
 
               const SizedBox(height: 10),

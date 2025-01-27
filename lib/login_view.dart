@@ -38,46 +38,49 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard on tap
-      child: Scaffold(
-        body: FutureBuilder(
-          future: Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          ),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.done:
-                return Stack(
+    return Scaffold(
+      body: FutureBuilder(
+        future: Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.done:
+              return GestureDetector(
+                onTap: () => FocusScope.of(context).unfocus(), // Ukrycie klawiatury
+                child: Stack(
                   children: [
-                    // 🌄 Background Image with Light Blur
+                    // 🔥 Obraz tła (widoczniejszy, ale przyciemniony dla czytelności)
                     Positioned.fill(
-                      child: ColorFiltered(
-                        colorFilter: ColorFilter.mode(
-                          Colors.black.withOpacity(0.3), // Lighter overlay
-                          BlendMode.darken,
-                        ),
-                        child: Image.asset(
-                          "assets/1-44.jpg",
-                          fit: BoxFit.cover,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage("assets/1-44.jpg"),
+                            fit: BoxFit.cover,
+                            colorFilter: ColorFilter.mode(
+                              Colors.black.withOpacity(0.5), // Przyciemnienie
+                              BlendMode.darken,
+                            ),
+                          ),
                         ),
                       ),
                     ),
 
-                    // 📋 Login Form
+                    // 🟠 Formularz logowania
                     Center(
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 25),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
+                        child: SingleChildScrollView(
                           child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // 🏛️ Logo
+                              // 🏫 Logo ISPGAYA
                               Text(
                                 'ISPGAYA',
                                 style: TextStyle(
                                   color: const Color(0xFFFA8742),
-                                  fontSize: MediaQuery.of(context).size.width * 0.12,
+                                  fontSize: MediaQuery.of(context).size.width * 0.13,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 textAlign: TextAlign.center,
@@ -90,42 +93,53 @@ class _LoginViewState extends State<LoginView> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 50),
+                              const SizedBox(height: 100),
 
-                              // 🔐 "LOGIN" Title
                               const Text(
                                 'LOGIN',
                                 style: TextStyle(
-                                  color: Color(0xFFFA8742),
-                                  fontSize: 32,
+                                  color: Colors.white,
+                                  fontSize: 28,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 30),
 
-                              // ✉️ Email Input
-                              _buildTextField(_email, "Email", Icons.email),
+                              // 📧 Email TextField
+                              _buildTextField(
+                                controller: _email,
+                                hintText: "Email",
+                                icon: Icons.email,
+                                isPassword: false,
+                              ),
                               const SizedBox(height: 15),
 
-                              // 🔒 Password Input
-                              _buildTextField(_password, "Password", Icons.lock, obscureText: true),
+                              // 🔑 Password TextField
+                              _buildTextField(
+                                controller: _password,
+                                hintText: "Password",
+                                icon: Icons.lock,
+                                isPassword: true,
+                              ),
                               const SizedBox(height: 25),
 
-                              // 🔘 Login Button
+                              // 🟠 Login Button
                               _buildButton(
-                                label: "Login",
+                                label: 'Login',
                                 onPressed: _isLoading ? null : _loginUser,
                                 isPrimary: true,
                               ),
                               const SizedBox(height: 15),
 
-                              // 🏛️ Guest Button
+                              // 🤵 Guest Button
                               _buildButton(
                                 label: "I'm a guest",
                                 onPressed: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => const GuestHomeView()),
+                                    MaterialPageRoute(
+                                      builder: (context) => const GuestHomeView(),
+                                    ),
                                   );
                                 },
                                 isPrimary: false,
@@ -136,71 +150,57 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     ),
                   ],
-                );
-              default:
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-            }
-          },
-        ),
+                ),
+              );
+            default:
+              return const Center(child: CircularProgressIndicator());
+          }
+        },
       ),
     );
   }
 
-  // 🔤 Text Field Widget
-  Widget _buildTextField(TextEditingController controller, String hintText, IconData icon,
-      {bool obscureText = false}) {
+  // 🔹 Komponent: Pole tekstowe
+  Widget _buildTextField({required TextEditingController controller, required String hintText, required IconData icon, required bool isPassword}) {
     return TextField(
       controller: controller,
-      obscureText: obscureText,
-      keyboardType: obscureText ? TextInputType.visiblePassword : TextInputType.emailAddress,
+      obscureText: isPassword,
+      keyboardType: isPassword ? TextInputType.text : TextInputType.emailAddress,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-        prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.7)),
+        hintStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
+        prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.8)),
         filled: true,
         fillColor: Colors.white.withOpacity(0.2),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
       ),
     );
   }
 
-  // 🔘 Button Widget
+  // 🔹 Komponent: Przycisk
   Widget _buildButton({required String label, required VoidCallback? onPressed, required bool isPrimary}) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        style: ButtonStyle(
-          backgroundColor: WidgetStateProperty.all(
-            isPrimary ? const Color(0xFFFA8742) : Colors.white,
-          ),
-          foregroundColor: WidgetStateProperty.all(
-            isPrimary ? Colors.white : const Color(0xFFFA8742),
-          ),
-          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 15)),
-          shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: isPrimary
-                  ? BorderSide.none
-                  : const BorderSide(color: Color(0xFFFA8742)),
-            ),
-          ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isPrimary ? const Color(0xFFFA8742) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(vertical: 15),
         ),
         onPressed: onPressed,
-        child: _isLoading
-            ? const CircularProgressIndicator(color: Colors.white)
-            : Text(label, style: const TextStyle(fontSize: 18)),
+        child: Text(
+          label,
+          style: TextStyle(fontSize: 18, color: isPrimary ? Colors.white : const Color(0xFFFA8742)),
+        ),
       ),
     );
   }
 
-  // 🚀 Login User Method
+  // 🔹 Metoda logowania użytkownika
   Future<void> _loginUser() async {
     setState(() => _isLoading = true);
 
@@ -208,7 +208,9 @@ class _LoginViewState extends State<LoginView> {
     final password = _password.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      _showMessage("Please fill in both fields.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in both fields.")),
+      );
       setState(() => _isLoading = false);
       return;
     }
@@ -227,27 +229,19 @@ class _LoginViewState extends State<LoginView> {
         if (userDoc.exists) {
           final role = userDoc.data()?['role'];
 
-          Widget nextPage = switch (role) {
-            "student" => const HomePageView(),
-            "prof" => const ProfDashboard(),
-            "admin" => const AdminDashboard(),
-            _ => const GuestHomeView(),
-          };
-
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => nextPage));
+          if (role == 'student') {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePageView()));
+          } else if (role == 'prof') {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ProfDashboard()));
+          } else if (role == 'admin') {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminDashboard()));
+          }
         }
       }
     } on FirebaseAuthException catch (e) {
-      _showMessage(e.message ?? "Invalid email or password.");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? "Invalid email or password.")));
     }
 
     setState(() => _isLoading = false);
-  }
-
-  // ⚠️ Show Error Messages
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 }
