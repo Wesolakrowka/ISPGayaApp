@@ -4,7 +4,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firebase_options.dart';
 import 'login_view.dart';
-import 'mock_data.dart'; // Import funkcji do generowania losowej bazy danych
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Received a background message: ${message.messageId}");
