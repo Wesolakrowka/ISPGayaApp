@@ -44,24 +44,34 @@ class _DegreesPageState extends State<DegreesPage> with SingleTickerProviderStat
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildDegreeList("ctesp"),
+          _buildDegreeList("ctesp"),  // ✅ Dodano obsługę CTeSP
           _buildDegreeList("degrees"),
-          _buildDegreeList("masters"),
+          _buildDegreeList("masters"), // ✅ Dodano obsługę Masters
         ],
       ),
     );
   }
 
-  // 📌 Function to fetch and display the list of courses
-  Widget _buildDegreeList(String category) {
+  // 📌 Pobieranie listy programów dla danej kategorii
+  Widget _buildDegreeList(String collectionName) {
     return Stack(
       children: [
         // 📷 Background Image
-        Positioned.fill(child: Image.asset("assets/2.jpg", fit: BoxFit.cover)),
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/2.jpg"),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.darken),
+              ),
+            ),
+          ),
+        ),
 
         SafeArea(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection(category).snapshots(),
+            stream: FirebaseFirestore.instance.collection(collectionName).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -77,7 +87,9 @@ class _DegreesPageState extends State<DegreesPage> with SingleTickerProviderStat
                 padding: const EdgeInsets.all(16.0),
                 children: snapshot.data!.docs.map((doc) {
                   var data = doc.data() as Map<String, dynamic>;
-                  return _degreeTile(context, data['name'] ?? "Unknown", data['description'] ?? "No description available.");
+                  String name = data['name'] ?? "Unknown";
+                  String description = data['description'] ?? "No description available.";
+                  return _degreeTile(context, name, description, collectionName);
                 }).toList(),
               );
             },
@@ -87,8 +99,8 @@ class _DegreesPageState extends State<DegreesPage> with SingleTickerProviderStat
     );
   }
 
-  // 📌 Degree List Tile
-  Widget _degreeTile(BuildContext context, String title, String description) {
+  // 📌 Degree List Tile (Poprawione!)
+  Widget _degreeTile(BuildContext context, String title, String description, String collection) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 3,
@@ -96,7 +108,12 @@ class _DegreesPageState extends State<DegreesPage> with SingleTickerProviderStat
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(description),
         trailing: const Icon(Icons.arrow_forward_ios, color: Color(0xFFFA8742)),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => DegreeDetailView(degreeTitle: title))),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DegreeDetailView(degreeTitle: title, collection: collection), // ✅ Teraz przekazujemy kolekcję
+          ),
+        ),
       ),
     );
   }

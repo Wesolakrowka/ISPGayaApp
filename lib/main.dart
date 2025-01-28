@@ -20,7 +20,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   setupNotifications();
 
-  bool shouldGenerateData = false; // Ustaw na true, jeśli chcesz wygenerować dane
+  bool shouldGenerateData = true; // Ustaw na true, jeśli chcesz wygenerować dane
   if (shouldGenerateData) {
     populateFirestore();
   }
