@@ -9,19 +9,19 @@ class GuestView extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // 📷 Obraz tła na całą stronę
+          // Background image for the entire page
           Positioned.fill(
             child: Image.asset(
-              "assets/1.jpg", // Ścieżka do obrazu w assets
+              "assets/1.jpg", // Path to the background image
               fit: BoxFit.cover,
             ),
           ),
 
-          // 📋 Główna zawartość
+          // Main content
           SafeArea(
             child: Column(
               children: [
-                // 🟠 Nagłówek
+                // Header
                 Container(
                   color: Colors.black.withOpacity(0.5),
                   padding: const EdgeInsets.symmetric(vertical: 15),
@@ -44,7 +44,7 @@ class GuestView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 🏫 Wprowadzenie
+                          // Introduction section
                           _buildSection(
                             title: "Welcome to Instituto Superior Politécnico Gaya (ISPGAYA)!",
                             content:
@@ -52,23 +52,23 @@ class GuestView extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
 
-                          // ℹ️ Informacje o szkole
+                          // Information card about the school
                           _buildInfoCard(),
 
                           const SizedBox(height: 20),
 
-                          // 🎓 Sekcja stopni
+                          // Degrees section
                           _buildTitle("Our Degrees"),
 
                           StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance.collection('degrees').snapshots(),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const Center(child: CircularProgressIndicator());
+                                return const Center(child: CircularProgressIndicator()); // Show loading indicator
                               }
 
                               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                                return const Text("No degrees available at the moment.");
+                                return const Text("No degrees available at the moment."); // No degrees found
                               }
 
                               return ListView(
@@ -98,7 +98,7 @@ class GuestView extends StatelessWidget {
     );
   }
 
-  // 🏛️ Stylizowana sekcja z tytułem i treścią
+  // Styled section with title and content
   Widget _buildSection({required String title, required String content}) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -120,7 +120,7 @@ class GuestView extends StatelessWidget {
     );
   }
 
-  // ℹ️ Stylizowana karta z informacjami o uczelni
+  // Styled card with information about the school
   Widget _buildInfoCard() {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -150,7 +150,7 @@ class GuestView extends StatelessWidget {
     );
   }
 
-  // 📌 Nagłówek sekcji
+  // Section header
   Widget _buildTitle(String title) {
     return Text(
       title,
@@ -158,7 +158,7 @@ class GuestView extends StatelessWidget {
     );
   }
 
-  // 🎓 Karta z danym stopniem
+  // Card displaying degree information
   Widget _degreeTile(BuildContext context, String title, String subtitle) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -178,7 +178,7 @@ class GuestView extends StatelessWidget {
   }
 }
 
-// 📜 Ekran szczegółów stopnia
+// Screen for degree details
 class DegreeDetailView extends StatelessWidget {
   final String degreeTitle;
   const DegreeDetailView({super.key, required this.degreeTitle});
@@ -192,17 +192,16 @@ class DegreeDetailView extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // 📷 Tło dla strony
-         
+          // Background for the page
           FutureBuilder<DocumentSnapshot>(
             future: FirebaseFirestore.instance.collection('degrees').doc(degreeTitle).get(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator()); // Show loading indicator
               }
 
               if (!snapshot.hasData || !snapshot.data!.exists) {
-                return const Center(child: Text("Degree details not found.", style: TextStyle(color: Colors.white)));
+                return const Center(child: Text("Degree details not found.", style: TextStyle(color: Colors.white))); // Degree not found
               }
 
               var data = snapshot.data!.data() as Map<String, dynamic>;
@@ -219,7 +218,7 @@ class DegreeDetailView extends StatelessWidget {
                     ],
                   ),
                   child: Text(
-                    data['description'] ?? "No detailed information available.",
+                    data['description'] ?? "No detailed information available.", // Display degree description
                     textAlign: TextAlign.justify,
                   ),
                 ),

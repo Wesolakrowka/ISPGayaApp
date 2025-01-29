@@ -1,88 +1,89 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:applicationispgaya/login_view.dart';
-import 'package:applicationispgaya/messages/contacts_view.dart';
-import 'package:applicationispgaya/viewStudent/schedule.dart';
+import 'package:flutter/material.dart'; // Importing Flutter's material design library for UI components
+import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Authentication for user authentication
+import 'package:applicationispgaya/login_view.dart'; // Importing the login view for user authentication
+import 'package:applicationispgaya/messages/contacts_view.dart'; // Importing the contacts view for messaging functionality
+import 'package:applicationispgaya/viewStudent/schedule.dart'; // Importing the schedule view for displaying user schedules
 
+// ProfDashboard is a StatelessWidget that represents the professor's dashboard
 class ProfDashboard extends StatelessWidget {
-  const ProfDashboard({super.key});
+  const ProfDashboard({super.key}); // Constructor for ProfDashboard
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
+    return Scaffold( // Scaffold provides a structure for the visual interface
+      body: Stack( // Stack allows for overlapping widgets
         children: [
-          // 📷 Obraz tła na całą stronę
-          Positioned.fill(
+          // Background image for the entire page
+          Positioned.fill( // Fills the available space with the background image
             child: Image.asset(
-              "assets/2.jpg", // Ścieżka do obrazu w assets
-              fit: BoxFit.cover,
+              "assets/2.jpg", // Path to the background image in assets
+              fit: BoxFit.cover, // Ensures the image covers the entire area
             ),
           ),
 
-          // 📋 Główna zawartość
-          SafeArea(
-            child: Column(
+          // Main content area
+          SafeArea( // Ensures that the content is not obscured by system UI
+            child: Column( // Column arranges its children vertically
               children: [
-                // 🟠 Logo i tytuł
+                // 🟠 Logo and title section
                 Container(
-                  color: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Column(
+                  color: Colors.transparent, // Transparent background for the container
+                  padding: const EdgeInsets.symmetric(vertical: 20), // Vertical padding
+                  child: Column( // Nested column for logo and title
                     children: [
                       Text(
-                        'ISPGAYA',
+                        'ISPGAYA', // Title text
                         style: TextStyle(
-                          color: const Color(0xFFFA8742),
-                          fontSize: MediaQuery.of(context).size.width * 0.1,
-                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFFFA8742), // Color for the title
+                          fontSize: MediaQuery.of(context).size.width * 0.1, // Responsive font size
+                          fontWeight: FontWeight.bold, // Bold font weight
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 5), // Space between title and subtitle
                       Text(
-                        'Instituto Superior Politécnico',
+                        'Instituto Superior Politécnico', // Subtitle text
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: MediaQuery.of(context).size.width * 0.045,
+                          color: Colors.white.withOpacity(0.8), // Semi-transparent white color
+                          fontSize: MediaQuery.of(context).size.width * 0.045, // Responsive font size
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 20), // Space between logo and buttons
 
-                // 🔘 Przyciskowa Sekcja
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
+                // Button section
+                Expanded( // Expands to fill available space
+                  child: SingleChildScrollView( // Allows scrolling if content overflows
+                    child: Column( // Column for buttons
                       children: [
-                        _buildMenuButton(context, label: 'Schedule', route: Schedule()),
-                        const SizedBox(height: 20),
+                        _buildMenuButton(context, label: 'Schedule', route: Schedule()), // Button for Schedule
+                        const SizedBox(height: 20), // Space between buttons
 
-                        _buildMenuButton(context, label: 'Messages', route: ContactsView()),
-                        const SizedBox(height: 20),
+                        _buildMenuButton(context, label: 'Messages', route: ContactsView()), // Button for Messages
+                        const SizedBox(height: 20), // Space between buttons
 
-                        // 🚪 Logout Button
+                        // Logout Button
                         Padding(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(20), // Padding around the button
                           child: SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              style: _logoutButtonStyle(),
-                              onPressed: () async {
-                                await FirebaseAuth.instance.signOut();
-                                Navigator.pushAndRemoveUntil(
+                            width: double.infinity, // Full width for the button
+                            child: OutlinedButton( // Outlined button for logout
+                              style: _logoutButtonStyle(), // Style for the logout button
+                              onPressed: () async { // Logout functionality
+                                await FirebaseAuth.instance.signOut(); // Sign out from Firebase
+                                Navigator.pushAndRemoveUntil( // Navigate to login view
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const LoginView(title: 'Login'),
+                                    builder: (context) => const LoginView(title: 'Login'), // Login view
                                   ),
-                                  (route) => false,
+                                  (route) => false, // Remove all previous routes
                                 );
                               },
                               child: const Text(
-                                'Logout',
-                                style: TextStyle(fontSize: 18, color: Color(0xFFFA8742)),
+                                'Logout', // Button text
+                                style: TextStyle(fontSize: 18, color: Color(0xFFFA8742)), // Text style
                               ),
                             ),
                           ),
@@ -92,29 +93,29 @@ class ProfDashboard extends StatelessWidget {
                   ),
                 ),
 
-                // 📌 Sekcja Kontaktu (przyklejona na dole)
+                // Contact section (pinned at the bottom)
                 Container(
-                  width: double.infinity,
-                  color: Colors.black.withOpacity(0.6),
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  width: double.infinity, // Full width for the contact section
+                  color: Colors.black.withOpacity(0.6), // Semi-transparent black background
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20), // Padding for the contact section
+                  child: const Column( // Column for contact information
+                    crossAxisAlignment: CrossAxisAlignment.start, // Aligns children to the start
                     children: [
                       Text(
-                        'Contacts:',
+                        'Contacts:', // Contact section title
                         style: TextStyle(
-                          color: Color(0xFFFA8742),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          color: Color(0xFFFA8742), // Color for the title
+                          fontWeight: FontWeight.bold, // Bold font weight
+                          fontSize: 18, // Font size for the title
                         ),
                       ),
-                      SizedBox(height: 5),
+                      SizedBox(height: 5), // Space between title and contact details
                       Text(
-                        'Av. dos Descobrimentos, 333\n'
-                        '4400-103 Santa Marinha - V.N.Gaia\n'
-                        '(+351) 223 745 730\n'
-                        'info@ispgaya.pt',
-                        style: TextStyle(fontSize: 12, color: Colors.white),
+                        'Av. dos Descobrimentos, 333\n' // Contact address
+                        '4400-103 Santa Marinha - V.N.Gaia\n' // Contact address continued
+                        '(+351) 223 745 730\n' // Phone number
+                        'info@ispgaya.pt', // Email address
+                        style: TextStyle(fontSize: 12, color: Colors.white), // Text style for contact details
                       ),
                     ],
                   ),
@@ -127,65 +128,65 @@ class ProfDashboard extends StatelessWidget {
     );
   }
 
-  // 🛠 Metoda do generowania przycisków
+  // Method to generate menu buttons
   Widget _buildMenuButton(BuildContext context, {required String label, required Widget route}) {
     return SizedBox(
-      width: 350,
-      child: OutlinedButton(
-        style: _menuButtonStyle(),
-        onPressed: () {
-          Navigator.push(
+      width: 350, // Fixed width for the button
+      child: OutlinedButton( // Outlined button for menu options
+        style: _menuButtonStyle(), // Style for the menu button
+        onPressed: () { // Button press functionality
+          Navigator.push( // Navigate to the specified route
             context,
-            MaterialPageRoute(builder: (context) => route),
+            MaterialPageRoute(builder: (context) => route), // Create a new route
           );
         },
         child: Text(
-          label,
-          style: const TextStyle(fontSize: 18, color: Colors.white),
+          label, // Button label
+          style: const TextStyle(fontSize: 18, color: Colors.white), // Text style for the button
         ),
       ),
     );
   }
 
-  // 🎨 Styl dla przycisków menu
+  // Style for menu buttons
   ButtonStyle _menuButtonStyle() {
     return OutlinedButton.styleFrom(
-      backgroundColor: const Color(0xFFFA8742),
-      foregroundColor: Colors.white,
-      side: const BorderSide(color: Color(0xFFFA8742)),
-      shape: RoundedRectangleBorder(
+      backgroundColor: const Color(0xFFFA8742), // Background color for the button
+      foregroundColor: Colors.white, // Text color for the button
+      side: const BorderSide(color: Color(0xFFFA8742)), // Border color for the button
+      shape: RoundedRectangleBorder( // Rounded corners for the button
         borderRadius: BorderRadius.circular(10),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(vertical: 15), // Padding for the button
     ).copyWith(
       overlayColor: WidgetStateProperty.resolveWith<Color?>(
-        (Set<WidgetState> states) {
+        (Set<WidgetState> states) { // Change overlay color on press
           if (states.contains(WidgetState.pressed)) {
-            return const Color(0xFFF26600);
+            return const Color(0xFFF26600); // Color when pressed
           }
-          return null;
+          return null; // Default overlay color
         },
       ),
     );
   }
 
-  // 🎨 Styl dla przycisku Logout
+  // Style for the Logout button
   ButtonStyle _logoutButtonStyle() {
     return OutlinedButton.styleFrom(
-      backgroundColor: Colors.white,
-      foregroundColor: const Color(0xFFFA8742),
-      side: const BorderSide(color: Color(0xFFFA8742)),
-      shape: RoundedRectangleBorder(
+      backgroundColor: Colors.white, // Background color for the logout button
+      foregroundColor: const Color(0xFFFA8742), // Text color for the logout button
+      side: const BorderSide(color: Color(0xFFFA8742)), // Border color for the logout button
+      shape: RoundedRectangleBorder( // Rounded corners for the logout button
         borderRadius: BorderRadius.circular(10),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(vertical: 15), // Padding for the logout button
     ).copyWith(
       overlayColor: WidgetStateProperty.resolveWith<Color?>(
-        (Set<WidgetState> states) {
+        (Set<WidgetState> states) { // Change overlay color on press
           if (states.contains(WidgetState.pressed)) {
-            return Colors.red.withOpacity(0.1);
+            return Colors.red.withOpacity(0.1); // Color when pressed
           }
-          return null;
+          return null; // Default overlay color
         },
       ),
     );
